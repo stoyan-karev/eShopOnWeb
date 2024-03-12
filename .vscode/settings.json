@@ -1,0 +1,6 @@
+{
+    "dotnet.defaultSolution": "Everything.sln",
+    "[*.cs]": {
+        "editor.defaultFormatter": "ms-dotnettools.csharp"
+     },
+}
