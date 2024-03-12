@@ -1,9 +1,11 @@
 param name string
 param endpointResourceIds array
+param tags object
 
 resource trafficManager 'Microsoft.Network/trafficmanagerprofiles@2022-04-01' = {
   name: name
   location: 'global'
+  tags: tags
   properties: {
     profileStatus: 'Enabled'
     trafficRoutingMethod: 'Priority'

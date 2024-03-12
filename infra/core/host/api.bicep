@@ -2,11 +2,13 @@ param location string
 param appName string
 param planName string
 param allowedOrigins array
+param tags object
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: planName
   location: location
   kind: 'linux'
+  tags: tags
   sku: {
     name: 'S1'
     tier: 'Standard'
@@ -20,6 +22,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
 resource scaleOutRule 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
   name: '${appServicePlan.name}-scale-out'
   location: location
+  tags: tags
   properties: {
     targetResourceUri: appServicePlan.id
     enabled: true
@@ -79,7 +82,7 @@ resource scaleOutRule 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
 resource appService 'Microsoft.Web/sites@2023-01-01' = {
   name: appName
   location: location
-  tags: { 'azd-service-name': 'api' }
+  tags: union(tags, { 'azd-service-name': 'api' })
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {

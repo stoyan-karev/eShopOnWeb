@@ -14,7 +14,6 @@ param location string
 param secondaryLocation string
 
 var abbrs = loadJsonContent('./abbreviations.json')
-// var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
 
 // Organize resources in a resource group
@@ -60,6 +59,7 @@ module api 'core/host/api.bicep' = {
       webSecondary.outputs.url
       trafficManager.outputs.trafficManagerUrl
     ]
+    tags: tags
   }
 }
 
@@ -72,6 +72,7 @@ module trafficManager 'core/network/traffic-manager.bicep' = {
       webPrimary.outputs.appServiceId
       webSecondary.outputs.appServiceId
     ]
+    tags: tags
   }
 }
 
