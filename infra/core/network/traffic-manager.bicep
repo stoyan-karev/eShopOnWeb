@@ -8,7 +8,7 @@ resource trafficManager 'Microsoft.Network/trafficmanagerprofiles@2022-04-01' = 
   tags: tags
   properties: {
     profileStatus: 'Enabled'
-    trafficRoutingMethod: 'Priority'
+    trafficRoutingMethod: 'Performance'
     dnsConfig: {
       relativeName: name
       ttl: 30
