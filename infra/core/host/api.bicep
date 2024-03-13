@@ -82,6 +82,7 @@ resource scaleOutRule 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
 resource appService 'Microsoft.Web/sites@2023-01-01' = {
   name: appName
   location: location
+  kind: 'app,linux'
   tags: union(tags, { 'azd-service-name': 'api' })
   properties: {
     serverFarmId: appServicePlan.id

@@ -13,6 +13,9 @@ param location string
 @description('Secondary location for all resources')
 param secondaryLocation string
 
+@description('Enable web staging slot for the primary web app')
+param useWebStagingSlot bool = false
+
 var abbrs = loadJsonContent('./abbreviations.json')
 var tags = { 'azd-env-name': environmentName }
 
@@ -32,6 +35,7 @@ module webPrimary 'core/host/web.bicep' = {
     planName: '${abbrs.webServerFarms}web-primary-${environmentName}'
     serviceName: 'web'
     tags: tags
+    useStagingSlot: useWebStagingSlot
   }
 }
 
@@ -51,7 +55,7 @@ module api 'core/host/api.bicep' = {
   name: 'api'
   scope: rg
   params: {
-    location: secondaryLocation
+    location: location
     appName: 'sk-${abbrs.webSitesAppService}api-${environmentName}'
     planName: '${abbrs.webServerFarms}api-${environmentName}'
     allowedOrigins: [
