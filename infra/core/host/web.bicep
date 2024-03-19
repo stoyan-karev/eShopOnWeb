@@ -31,7 +31,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
     }
     httpsOnly: true
   }
-
+  
   resource appSettings 'config' = {
     name: 'appsettings'
     properties: {

@@ -3,6 +3,7 @@ param appName string
 param planName string
 param allowedOrigins array
 param tags object
+param appInsightsConnectionString string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: planName
@@ -44,14 +45,14 @@ resource scaleOutRule 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
               timeAggregation: 'Average'
               statistic: 'Average'
               timeGrain: 'PT1M'
-              timeWindow: 'PT5M'
+              timeWindow: 'PT10M'
               dimensions: []
             }
             scaleAction: {
               direction: 'Increase'
               type: 'ChangeCount'
               value: '1'
-              cooldown: 'PT5M'
+              cooldown: 'PT10M'
             }
           }
           {
@@ -63,14 +64,14 @@ resource scaleOutRule 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
               timeAggregation: 'Average'
               statistic: 'Average'
               timeGrain: 'PT1M'
-              timeWindow: 'PT5M'
+              timeWindow: 'PT10M'
               dimensions: []
             }
             scaleAction: {
               direction: 'Decrease'
               type: 'ChangeCount'
               value: '1'
-              cooldown: 'PT5M'
+              cooldown: 'PT10M'
             }
           }
         ]
@@ -99,6 +100,8 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
     name: 'appsettings'
     properties: {
       UseOnlyInMemoryDatabase: 'true'
+      APPLICATIONINSIGHTS_CONNECTION_STRING: appInsightsConnectionString
+      ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
     }
   }
 }

@@ -26,6 +26,27 @@ resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   tags: tags
 }
 
+module logWorkspace 'core/monitoring/log-workspace.bicep' = {
+  name: 'logWorkspace'
+  scope: rg
+  params: {
+    location: location
+    name: 'sk-${abbrs.operationalInsightsWorkspaces}${environmentName}'
+    tags: tags
+  }
+}
+
+module appInsights 'core/monitoring/application-insights.bicep' = {
+  name: 'appInsights'
+  scope: rg
+  params: {
+    location: location
+    name: 'sk-${abbrs.insightsComponents}${environmentName}'
+    tags: tags
+    workspaceId: logWorkspace.outputs.workspaceId
+  }
+}
+
 module webPrimary 'core/host/web.bicep' = {
   name: 'webPrimary'
   scope: rg
@@ -64,6 +85,7 @@ module api 'core/host/api.bicep' = {
       trafficManager.outputs.trafficManagerUrl
     ]
     tags: tags
+    appInsightsConnectionString: appInsights.outputs.connectionString
   }
 }
 
