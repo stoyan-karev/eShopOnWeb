@@ -1,6 +1,18 @@
 {
-    "dotnet.defaultSolution": "Everything.sln",
-    "[*.cs]": {
-        "editor.defaultFormatter": "ms-dotnettools.csharp"
-     },
+  "dotnet.defaultSolution": "Everything.sln",
+  "[*.cs]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp"
+  },
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "__azurite*": true,
+    "__blobstorage__": true,
+    "__queuestorage__": true
+  },
+  "azureFunctions.projectSubpath": "src/Functions",
+  "azureFunctions.deploySubpath": "src/Functions/bin/Release/net6.0/publish",
+  "azureFunctions.projectLanguage": "C#",
+  "azureFunctions.projectRuntime": "~4",
+  "debug.internalConsoleOptions": "neverOpen",
+  "azureFunctions.preDeployTask": "publish (functions)"
 }
