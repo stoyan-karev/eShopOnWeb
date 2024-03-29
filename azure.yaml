@@ -6,7 +6,7 @@ services:
     project: ./src/Web
     language: csharp
     host: appservice
-  webSecondary:
+  webSecondary: 
     project: ./src/Web
     language: csharp
     host: appservice
@@ -14,4 +14,8 @@ services:
     project: ./src/PublicApi
     language: csharp
     host: appservice
+  functions:
+    project: ./src/Functions
+    language: csharp
+    host: function
   

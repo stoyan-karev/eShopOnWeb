@@ -47,6 +47,29 @@ module appInsights 'core/monitoring/application-insights.bicep' = {
   }
 }
 
+module storage 'core/storage/storage-account.bicep' = {
+  name: 'storage'
+  scope: rg
+  params: {
+    location: location
+    name: 'sk${abbrs.storageStorageAccounts}${environmentName}'
+    tags: tags
+  }
+}
+
+module functionApp 'core/host/functions.bicep' = {
+  name: 'functionApp'
+  scope: rg
+  params: {
+    location: location
+    serviceName: 'functions'
+    name: 'sk-${abbrs.webSitesFunctions}${environmentName}'
+    applicationInsightsConnection: appInsights.outputs.connectionString
+    storageAccountConnection: storage.outputs.connectionString
+    tags: tags
+  }
+}
+
 module webPrimary 'core/host/web.bicep' = {
   name: 'webPrimary'
   scope: rg
@@ -57,6 +80,9 @@ module webPrimary 'core/host/web.bicep' = {
     serviceName: 'web'
     tags: tags
     useStagingSlot: useWebStagingSlot
+    orderItemsReceiverBaseUrl: functionApp.outputs.url
+    orderItemsReceiverApiCode: functionApp.outputs.accessKey
+    applicationInsightsConnection: appInsights.outputs.connectionString
   }
 }
 
@@ -69,6 +95,9 @@ module webSecondary 'core/host/web.bicep' = {
     planName: '${abbrs.webServerFarms}secondary-${environmentName}'
     serviceName: 'webSecondary'
     tags: tags
+    orderItemsReceiverBaseUrl: functionApp.outputs.url
+    orderItemsReceiverApiCode: functionApp.outputs.accessKey
+    applicationInsightsConnection: appInsights.outputs.connectionString
   }
 }
 

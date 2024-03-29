@@ -4,6 +4,13 @@ param planName string
 param serviceName string
 param tags object
 param useStagingSlot bool = false
+param orderItemsReceiverBaseUrl string
+
+@secure()
+param orderItemsReceiverApiCode string
+
+@secure()
+param applicationInsightsConnection string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: planName
@@ -31,26 +38,31 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
     }
     httpsOnly: true
   }
-  
+
   resource appSettings 'config' = {
     name: 'appsettings'
     properties: {
       UseOnlyInMemoryDatabase: 'true'
+      OrderItemsReceiver__BaseUri: orderItemsReceiverBaseUrl
+      OrderItemsReceiver__ApiCode: orderItemsReceiverApiCode
+      APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsightsConnection
+      ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
     }
   }
 
-  resource stagingSlot 'slots' = if (useStagingSlot) {
-    name: 'staging'
-    location: location
-    tags: tags
-    properties: {
-      serverFarmId: appServicePlan.id
-      siteConfig: {
-        linuxFxVersion: 'DOTNETCORE|8.0'
+  resource stagingSlot 'slots' =
+    if (useStagingSlot) {
+      name: 'staging'
+      location: location
+      tags: tags
+      properties: {
+        serverFarmId: appServicePlan.id
+        siteConfig: {
+          linuxFxVersion: 'DOTNETCORE|8.0'
+        }
+        httpsOnly: true
       }
-      httpsOnly: true
     }
-  }
 }
 
 output url string = 'https://${appService.properties.defaultHostName}'
