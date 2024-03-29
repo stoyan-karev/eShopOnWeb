@@ -23,6 +23,7 @@ public static class OrderItemsReceiver
             return new BadRequestObjectResult("Invalid order request");
         }
 
+        ordersContainer.CreateIfNotExists();
         var blob = ordersContainer.GetBlobClient(orderRequest.OrderId.ToString());
         using (var writer = new StreamWriter(await blob.OpenWriteAsync(true)))
         {
