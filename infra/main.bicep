@@ -16,6 +16,12 @@ param secondaryLocation string
 @description('Enable web staging slot for the primary web app')
 param useWebStagingSlot bool = false
 
+@secure()
+param sqlAdminLogin string
+
+@secure()
+param sqlAdminPassword string
+
 var abbrs = loadJsonContent('./abbreviations.json')
 var tags = { 'azd-env-name': environmentName }
 
@@ -70,6 +76,44 @@ module functionApp 'core/host/functions.bicep' = {
   }
 }
 
+module sqlServer 'core/database/sql-server.bicep' = {
+  name: 'sqlServer'
+  scope: rg
+  params: {
+    location: secondaryLocation
+    name: 'sk-${abbrs.sqlServers}${environmentName}'
+    adminLogin: sqlAdminLogin
+    adminPassword: sqlAdminPassword
+    tags: tags
+  }
+}
+
+module catalogDb 'core/database/sql-database.bicep' = {
+  name: 'catalogDb'
+  scope: rg
+  params: {
+    location: secondaryLocation
+    serverName: sqlServer.outputs.name
+    name: 'Catalog'
+    tags: tags
+  }
+}
+
+module identityDb 'core/database/sql-database.bicep' = {
+  name: 'identityDb'
+  scope: rg
+  params: {
+    location: secondaryLocation
+    serverName: sqlServer.outputs.name
+    name: 'Identity'
+    tags: tags
+  }
+}
+
+// TODO: Use KeyVault to store the connection strings
+var identityConnection = 'Server=${sqlServer.outputs.fullyQualifiedDomainName}; Database=${identityDb.outputs.name}; User=${sqlAdminLogin}; Password=${sqlAdminPassword};'
+var catalogConnection = 'Server=${sqlServer.outputs.fullyQualifiedDomainName}; Database=${catalogDb.outputs.name}; User=${sqlAdminLogin}; Password=${sqlAdminPassword};'
+
 module webPrimary 'core/host/web.bicep' = {
   name: 'webPrimary'
   scope: rg
@@ -83,6 +127,8 @@ module webPrimary 'core/host/web.bicep' = {
     orderItemsReceiverBaseUrl: functionApp.outputs.url
     orderItemsReceiverApiCode: functionApp.outputs.accessKey
     applicationInsightsConnection: appInsights.outputs.connectionString
+    identityDbConnectionString: identityConnection
+    catalogDbConnectionString: catalogConnection
   }
 }
 
@@ -98,6 +144,8 @@ module webSecondary 'core/host/web.bicep' = {
     orderItemsReceiverBaseUrl: functionApp.outputs.url
     orderItemsReceiverApiCode: functionApp.outputs.accessKey
     applicationInsightsConnection: appInsights.outputs.connectionString
+    identityDbConnectionString: identityConnection
+    catalogDbConnectionString: catalogConnection
   }
 }
 
@@ -113,6 +161,8 @@ module api 'core/host/api.bicep' = {
       webSecondary.outputs.url
       trafficManager.outputs.trafficManagerUrl
     ]
+    identityDbConnectionString: identityConnection
+    catalogDbConnectionString: catalogConnection
     tags: tags
     appInsightsConnectionString: appInsights.outputs.connectionString
   }

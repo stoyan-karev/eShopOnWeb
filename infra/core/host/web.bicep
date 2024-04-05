@@ -5,6 +5,10 @@ param serviceName string
 param tags object
 param useStagingSlot bool = false
 param orderItemsReceiverBaseUrl string
+@secure()
+param identityDbConnectionString string
+@secure()
+param catalogDbConnectionString string
 
 @secure()
 param orderItemsReceiverApiCode string
@@ -42,11 +46,25 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   resource appSettings 'config' = {
     name: 'appsettings'
     properties: {
-      UseOnlyInMemoryDatabase: 'true'
+      UseOnlyInMemoryDatabase: 'false'
       OrderItemsReceiver__BaseUri: orderItemsReceiverBaseUrl
       OrderItemsReceiver__ApiCode: orderItemsReceiverApiCode
       APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsightsConnection
       ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+    }
+  }
+
+  resource connectionStrings 'config' = {
+    name: 'connectionstrings'
+    properties: {
+      IdentityConnection: {
+        value: identityDbConnectionString
+        type: 'SQLAzure'
+      }
+      CatalogConnection: {
+        value: catalogDbConnectionString
+        type: 'SQLAzure'
+      }
     }
   }
 

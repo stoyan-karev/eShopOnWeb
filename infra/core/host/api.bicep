@@ -4,6 +4,10 @@ param planName string
 param allowedOrigins array
 param tags object
 param appInsightsConnectionString string
+@secure()
+param identityDbConnectionString string
+@secure()
+param catalogDbConnectionString string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: planName
@@ -99,9 +103,23 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   resource appSettings 'config' = {
     name: 'appsettings'
     properties: {
-      UseOnlyInMemoryDatabase: 'true'
+      UseOnlyInMemoryDatabase: 'false'
       APPLICATIONINSIGHTS_CONNECTION_STRING: appInsightsConnectionString
       ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+    }
+  }
+
+  resource connectionStrings 'config' = {
+    name: 'connectionstrings'
+    properties: {
+      IdentityConnection: {
+        value: identityDbConnectionString
+        type: 'SQLAzure'
+      }
+      CatalogConnection: {
+        value: catalogDbConnectionString
+        type: 'SQLAzure'
+      }
     }
   }
 }
