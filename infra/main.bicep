@@ -63,6 +63,26 @@ module storage 'core/storage/storage-account.bicep' = {
   }
 }
 
+module cosmosAccount 'core/database/cosmos-account.bicep' = {
+  name: 'cosmosDbAccount'
+  scope: rg
+  params: {
+    location: location
+    name: 'sk-${abbrs.documentDBDatabaseAccounts}${environmentName}'
+    tags: tags
+  }
+}
+
+module deliveryOrdersDb 'core/database/cosmos-db.bicep' = {
+  name: 'deliveryOrdersDb'
+  scope: rg
+  params: {
+    accountName: cosmosAccount.outputs.name
+    databaseName: 'DeliveryOrders'
+    tags: tags
+  }
+}
+
 module functionApp 'core/host/functions.bicep' = {
   name: 'functionApp'
   scope: rg
@@ -72,6 +92,7 @@ module functionApp 'core/host/functions.bicep' = {
     name: 'sk-${abbrs.webSitesFunctions}${environmentName}'
     applicationInsightsConnection: appInsights.outputs.connectionString
     storageAccountConnection: storage.outputs.connectionString
+    deliveryOrdersDbConnectionString: deliveryOrdersDb.outputs.connectionString
     tags: tags
   }
 }
@@ -80,7 +101,7 @@ module sqlServer 'core/database/sql-server.bicep' = {
   name: 'sqlServer'
   scope: rg
   params: {
-    location: secondaryLocation
+    location: location
     name: 'sk-${abbrs.sqlServers}${environmentName}'
     adminLogin: sqlAdminLogin
     adminPassword: sqlAdminPassword
@@ -92,7 +113,7 @@ module catalogDb 'core/database/sql-database.bicep' = {
   name: 'catalogDb'
   scope: rg
   params: {
-    location: secondaryLocation
+    location: location
     serverName: sqlServer.outputs.name
     name: 'Catalog'
     tags: tags
@@ -103,7 +124,7 @@ module identityDb 'core/database/sql-database.bicep' = {
   name: 'identityDb'
   scope: rg
   params: {
-    location: secondaryLocation
+    location: location
     serverName: sqlServer.outputs.name
     name: 'Identity'
     tags: tags

@@ -9,6 +9,9 @@ param applicationInsightsConnection string
 @secure()
 param storageAccountConnection string
 
+@secure()
+param deliveryOrdersDbConnectionString string
+
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: 'plan-${name}'
   location: location
@@ -58,6 +61,10 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: 'dotnet'
+        }
+        {
+          name: 'DeliveryOrdersConnection'
+          value: deliveryOrdersDbConnectionString
         }
         // Workaround for https://github.com/Azure/azure-dev/issues/3162#issuecomment-1937806202
         {
