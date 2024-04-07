@@ -49,6 +49,8 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
       UseOnlyInMemoryDatabase: 'false'
       OrderItemsReceiver__BaseUri: orderItemsReceiverBaseUrl
       OrderItemsReceiver__ApiCode: orderItemsReceiverApiCode
+      DeliveryOrderProcessor__BaseUri: orderItemsReceiverBaseUrl
+      DeliveryOrderProcessor__ApiCode: orderItemsReceiverApiCode
       APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsightsConnection
       ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
     }

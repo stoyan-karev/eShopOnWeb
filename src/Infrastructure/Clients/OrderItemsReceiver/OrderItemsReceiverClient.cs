@@ -1,6 +1,4 @@
-using System;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 
@@ -13,21 +11,12 @@ public class OrderItemsReceiverClient : IOrderItemsReceiverClient
     public OrderItemsReceiverClient(HttpClient httpClient, IOptions<OrderItemsReceiverConfiguration> options)
     {
         _httpClient = httpClient;
-        _httpClient.BaseAddress = new Uri(options.Value.BaseUri);
-        if (!string.IsNullOrEmpty(options.Value.ApiCode))
-        {
-            _httpClient.DefaultRequestHeaders.Add("x-functions-key", options.Value.ApiCode);
-        }
+        _httpClient.AddAzureFunctionConfiguration(options.Value.BaseUri, options.Value.ApiCode);
     }
 
-    public async Task SendRequest(OrderRequest orderRequest)
+    public async Task SendAsync(OrderRequest orderRequest)
     {
-        // Using StringContent correctly sets the Content-Length header 
-        var serializedOrderRequest = JsonSerializer.Serialize(orderRequest);
-        var content = new StringContent(serializedOrderRequest, System.Text.Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync("api/OrderItemsReceiver", content);
-
-        response.EnsureSuccessStatusCode();
+        await _httpClient.PostJsonAsync("api/OrderItemsReceiver", orderRequest);
     }
 }
 

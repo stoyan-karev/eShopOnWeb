@@ -3,7 +3,7 @@ using Microsoft.eShopWeb.ApplicationCore.Entities.OrderAggregate;
 
 namespace Microsoft.eShopWeb.ApplicationCore.Interfaces;
 
-public interface IOrderRequestPublisher
+public interface IOrderPublisher
 {
     Task PublishAsync(Order order);
 }

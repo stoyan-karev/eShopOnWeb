@@ -7,7 +7,7 @@ using Microsoft.eShopWeb.Infrastructure.Clients.OrderItemsReceiver;
 
 namespace Microsoft.eShopWeb.Infrastructure.Services;
 
-public class OrderRequestPublisher : IOrderRequestPublisher
+public class OrderRequestPublisher : IOrderPublisher
 {
     private readonly IOrderItemsReceiverClient _orderItemsReceiverClient;
 
@@ -20,7 +20,7 @@ public class OrderRequestPublisher : IOrderRequestPublisher
     {
         var orderRequest = MapToOrderRequest(order);
 
-        await _orderItemsReceiverClient.SendRequest(orderRequest);
+        await _orderItemsReceiverClient.SendAsync(orderRequest);
     }
 
     private static OrderRequest MapToOrderRequest(Order order)
