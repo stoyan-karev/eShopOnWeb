@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
 
-namespace Microsoft.eShopWeb.Functions.ViewModels;
+namespace Microsoft.eShopWeb.Functions.OrderItemsReceiver.Models;
 
 public class OrderRequest
 {
-    [Required]
+    [JsonRequired]
     public int? OrderId { get; set; }
-    [Required]
+    [JsonRequired]
     public List<OrderItem>? OrderItems { get; set; }
 }
