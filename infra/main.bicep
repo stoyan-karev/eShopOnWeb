@@ -22,6 +22,8 @@ param sqlAdminLogin string
 @secure()
 param sqlAdminPassword string
 
+param principalId string
+
 var abbrs = loadJsonContent('./abbreviations.json')
 var tags = { 'azd-env-name': environmentName }
 
@@ -39,6 +41,17 @@ module logWorkspace 'core/monitoring/log-workspace.bicep' = {
     location: location
     name: 'sk-${abbrs.operationalInsightsWorkspaces}${environmentName}'
     tags: tags
+  }
+}
+
+module keyVault 'core/security/keyvault.bicep' = {
+  name: 'keyVault'
+  scope: rg
+  params: {
+    location: location
+    name: 'sk-${abbrs.keyVaultVaults}${environmentName}'
+    tags: tags
+    principalId: principalId
   }
 }
 
@@ -117,6 +130,9 @@ module catalogDb 'core/database/sql-database.bicep' = {
     serverName: sqlServer.outputs.name
     name: 'Catalog'
     tags: tags
+    adminLogin: sqlAdminLogin
+    adminPassword: sqlAdminPassword
+    keyVaultName: keyVault.outputs.name
   }
 }
 
@@ -128,12 +144,11 @@ module identityDb 'core/database/sql-database.bicep' = {
     serverName: sqlServer.outputs.name
     name: 'Identity'
     tags: tags
+    adminLogin: sqlAdminLogin
+    adminPassword: sqlAdminPassword
+    keyVaultName: keyVault.outputs.name
   }
 }
-
-// TODO: Use KeyVault to store the connection strings
-var identityConnection = 'Server=${sqlServer.outputs.fullyQualifiedDomainName}; Database=${identityDb.outputs.name}; User=${sqlAdminLogin}; Password=${sqlAdminPassword};'
-var catalogConnection = 'Server=${sqlServer.outputs.fullyQualifiedDomainName}; Database=${catalogDb.outputs.name}; User=${sqlAdminLogin}; Password=${sqlAdminPassword};'
 
 module webPrimary 'core/host/web.bicep' = {
   name: 'webPrimary'
@@ -148,8 +163,9 @@ module webPrimary 'core/host/web.bicep' = {
     orderItemsReceiverBaseUrl: functionApp.outputs.url
     orderItemsReceiverApiCode: functionApp.outputs.accessKey
     applicationInsightsConnection: appInsights.outputs.connectionString
-    identityDbConnectionString: identityConnection
-    catalogDbConnectionString: catalogConnection
+    identityDbConnectionString: identityDb.outputs.connectionStringKeyVaultRef
+    catalogDbConnectionString: catalogDb.outputs.connectionStringKeyVaultRef
+    keyVaultName: keyVault.outputs.name
   }
 }
 
@@ -165,8 +181,9 @@ module webSecondary 'core/host/web.bicep' = {
     orderItemsReceiverBaseUrl: functionApp.outputs.url
     orderItemsReceiverApiCode: functionApp.outputs.accessKey
     applicationInsightsConnection: appInsights.outputs.connectionString
-    identityDbConnectionString: identityConnection
-    catalogDbConnectionString: catalogConnection
+    identityDbConnectionString: identityDb.outputs.connectionStringKeyVaultRef
+    catalogDbConnectionString: catalogDb.outputs.connectionStringKeyVaultRef
+    keyVaultName: keyVault.outputs.name
   }
 }
 
@@ -182,10 +199,11 @@ module api 'core/host/api.bicep' = {
       webSecondary.outputs.url
       trafficManager.outputs.trafficManagerUrl
     ]
-    identityDbConnectionString: identityConnection
-    catalogDbConnectionString: catalogConnection
+    identityDbConnectionString: identityDb.outputs.connectionStringKeyVaultRef
+    catalogDbConnectionString: catalogDb.outputs.connectionStringKeyVaultRef
     tags: tags
     appInsightsConnectionString: appInsights.outputs.connectionString
+    keyVaultName: keyVault.outputs.name
   }
 }
 

@@ -19,6 +19,9 @@
     },
     "sqlAdminPassword": {
       "value": "${AZURE_SQL_ADMIN_PASSWORD}"
+    },
+    "principalId": {
+      "value": "${AZURE_PRINCIPAL_ID}"
     }
   }
 }

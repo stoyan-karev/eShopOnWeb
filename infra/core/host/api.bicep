@@ -9,6 +9,8 @@ param identityDbConnectionString string
 @secure()
 param catalogDbConnectionString string
 
+param keyVaultName string
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: planName
   location: location
@@ -89,6 +91,9 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   location: location
   kind: 'app,linux'
   tags: union(tags, { 'azd-service-name': 'api' })
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
@@ -111,6 +116,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
 
   resource connectionStrings 'config' = {
     name: 'connectionstrings'
+    dependsOn: [keyVault::accessPolicy]
     properties: {
       IdentityConnection: {
         value: identityDbConnectionString
@@ -120,6 +126,25 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         value: catalogDbConnectionString
         type: 'SQLAzure'
       }
+    }
+  }
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVaultName
+
+  resource accessPolicy 'accessPolicies' = {
+    name: 'add'
+    properties: {
+      accessPolicies: [
+        {
+          tenantId: subscription().tenantId
+          objectId: appService.identity.principalId
+          permissions: {
+            secrets: ['get']
+          }
+        }
+      ]
     }
   }
 }
