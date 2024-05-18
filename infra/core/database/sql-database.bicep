@@ -37,13 +37,5 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   }
 }
 
-// resource secret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-//   name: '${name}-connection-string'
-//   parent: keyVault
-//   properties: {
-//     value: 'Server=${server.properties.fullyQualifiedDomainName}; Database=${server::database.name}; User=${adminLogin}; Password=${adminPassword};'
-//   }
-// }
-
 output name string = server::database.name
 output connectionStringKeyVaultRef string = '@Microsoft.KeyVault(SecretUri=${keyVault::secret.properties.secretUriWithVersion})'

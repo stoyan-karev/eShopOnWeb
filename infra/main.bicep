@@ -103,9 +103,11 @@ module functionApp 'core/host/functions.bicep' = {
     location: location
     serviceName: 'functions'
     name: 'sk-${abbrs.webSitesFunctions}${environmentName}'
+    keyVaultName: keyVault.outputs.name
     applicationInsightsConnection: appInsights.outputs.connectionString
     storageAccountConnection: storage.outputs.connectionString
     deliveryOrdersDbConnectionString: deliveryOrdersDb.outputs.connectionString
+    orderItemsQueueConnection: orderItemsQueue.outputs.listenConnectionString
     tags: tags
   }
 }
@@ -150,6 +152,26 @@ module identityDb 'core/database/sql-database.bicep' = {
   }
 }
 
+module serviceBusNamespace 'core/service-bus/namespace.bicep' = {
+  name: 'serviceBusNamespace'
+  scope: rg
+  params: {
+    location: location
+    name: 'sk-${abbrs.serviceBusNamespaces}${environmentName}'
+    tags: tags
+  }
+}
+
+module orderItemsQueue 'core/service-bus/order-items-queue.bicep' = {
+  name: 'orderItemsQueue'
+  scope: rg
+  params: {
+    serviceBusNamespace: serviceBusNamespace.outputs.name
+    name: 'order-items'
+    keyVaultName: keyVault.outputs.name
+  }
+}
+
 module webPrimary 'core/host/web.bicep' = {
   name: 'webPrimary'
   scope: rg
@@ -160,8 +182,10 @@ module webPrimary 'core/host/web.bicep' = {
     serviceName: 'web'
     tags: tags
     useStagingSlot: useWebStagingSlot
-    orderItemsReceiverBaseUrl: functionApp.outputs.url
-    orderItemsReceiverApiCode: functionApp.outputs.accessKey
+    orderItemsQueueConnection: orderItemsQueue.outputs.sendConnectionString
+    orderItemsQueueName: orderItemsQueue.outputs.name
+    deliveryOrderProcessorUrl: functionApp.outputs.url
+    deliveryOrderProcessorApiCode: functionApp.outputs.accessKey
     applicationInsightsConnection: appInsights.outputs.connectionString
     identityDbConnectionString: identityDb.outputs.connectionStringKeyVaultRef
     catalogDbConnectionString: catalogDb.outputs.connectionStringKeyVaultRef
@@ -178,8 +202,10 @@ module webSecondary 'core/host/web.bicep' = {
     planName: '${abbrs.webServerFarms}secondary-${environmentName}'
     serviceName: 'webSecondary'
     tags: tags
-    orderItemsReceiverBaseUrl: functionApp.outputs.url
-    orderItemsReceiverApiCode: functionApp.outputs.accessKey
+    orderItemsQueueConnection: orderItemsQueue.outputs.sendConnectionString
+    orderItemsQueueName: orderItemsQueue.outputs.name
+    deliveryOrderProcessorUrl: functionApp.outputs.url
+    deliveryOrderProcessorApiCode: functionApp.outputs.accessKey
     applicationInsightsConnection: appInsights.outputs.connectionString
     identityDbConnectionString: identityDb.outputs.connectionStringKeyVaultRef
     catalogDbConnectionString: catalogDb.outputs.connectionStringKeyVaultRef

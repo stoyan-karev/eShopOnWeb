@@ -2,6 +2,7 @@ param location string = resourceGroup().location
 param tags object = {}
 param name string
 param serviceName string
+param keyVaultName string
 
 @secure()
 param applicationInsightsConnection string
@@ -11,6 +12,9 @@ param storageAccountConnection string
 
 @secure()
 param deliveryOrdersDbConnectionString string
+
+@secure()
+param orderItemsQueueConnection string
 
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: 'plan-${name}'
@@ -41,6 +45,14 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         {
           name: 'AzureWebJobsStorage'
           value: storageAccountConnection
+        }
+        {
+          name: 'OrderItemsStorage'
+          value: storageAccountConnection
+        }
+        {
+          name: 'OrderItemsQueueConnection'
+          value: orderItemsQueueConnection
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
@@ -76,6 +88,25 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
       minTlsVersion: '1.2'
     }
     httpsOnly: true
+  }
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVaultName
+
+  resource accessPolicy 'accessPolicies' = {
+    name: 'add'
+    properties: {
+      accessPolicies: [
+        {
+          tenantId: subscription().tenantId
+          objectId: functionApp.identity.principalId
+          permissions: {
+            secrets: ['get']
+          }
+        }
+      ]
+    }
   }
 }
 

@@ -4,14 +4,16 @@ param planName string
 param serviceName string
 param tags object
 param useStagingSlot bool = false
-param orderItemsReceiverBaseUrl string
+param orderItemsQueueName string
+param orderItemsQueueConnection string
+
 @secure()
 param identityDbConnectionString string
 @secure()
 param catalogDbConnectionString string
 
-@secure()
-param orderItemsReceiverApiCode string
+param deliveryOrderProcessorUrl string
+param deliveryOrderProcessorApiCode string
 
 @secure()
 param applicationInsightsConnection string
@@ -52,10 +54,10 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
     name: 'appsettings'
     properties: {
       UseOnlyInMemoryDatabase: 'false'
-      OrderItemsReceiver__BaseUri: orderItemsReceiverBaseUrl
-      OrderItemsReceiver__ApiCode: orderItemsReceiverApiCode
-      DeliveryOrderProcessor__BaseUri: orderItemsReceiverBaseUrl
-      DeliveryOrderProcessor__ApiCode: orderItemsReceiverApiCode
+      OrderItemsPublisher__QueueConnection: orderItemsQueueConnection
+      OrderItemsPublisher__QueueName: orderItemsQueueName
+      DeliveryOrderProcessor__BaseUri: deliveryOrderProcessorUrl
+      DeliveryOrderProcessor__ApiCode: deliveryOrderProcessorApiCode
       APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsightsConnection
       ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
     }
@@ -76,19 +78,18 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
     }
   }
 
-  resource stagingSlot 'slots' =
-    if (useStagingSlot) {
-      name: 'staging'
-      location: location
-      tags: tags
-      properties: {
-        serverFarmId: appServicePlan.id
-        siteConfig: {
-          linuxFxVersion: 'DOTNETCORE|8.0'
-        }
-        httpsOnly: true
+  resource stagingSlot 'slots' = if (useStagingSlot) {
+    name: 'staging'
+    location: location
+    tags: tags
+    properties: {
+      serverFarmId: appServicePlan.id
+      siteConfig: {
+        linuxFxVersion: 'DOTNETCORE|8.0'
       }
+      httpsOnly: true
     }
+  }
 }
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {

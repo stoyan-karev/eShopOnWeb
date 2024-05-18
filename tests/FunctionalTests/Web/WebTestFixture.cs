@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.eShopWeb.Infrastructure.Clients.OrderItemsReceiver;
 using Microsoft.eShopWeb.Infrastructure.Data;
 using Microsoft.eShopWeb.Infrastructure.Identity;
 using Microsoft.eShopWeb.Web.Interfaces;
@@ -53,8 +52,6 @@ public class TestApplication : WebApplicationFactory<IBasketViewModelService>
                 .Options;
             });
 
-            // Replace the OrderItemsReceiverClient with a mock
-            services.AddScoped(s => Substitute.For<IOrderItemsReceiverClient>());
         });
 
         return base.CreateHost(builder);

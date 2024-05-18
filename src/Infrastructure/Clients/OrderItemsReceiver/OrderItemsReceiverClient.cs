@@ -1,22 +1,23 @@
-using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Azure;
+using Azure.Messaging.ServiceBus;
 
 namespace Microsoft.eShopWeb.Infrastructure.Clients.OrderItemsReceiver;
 
 public class OrderItemsReceiverClient : IOrderItemsReceiverClient
 {
-    private readonly HttpClient _httpClient;
+    private readonly ServiceBusSender _sender;
 
-    public OrderItemsReceiverClient(HttpClient httpClient, IOptions<OrderItemsReceiverConfiguration> options)
+    public OrderItemsReceiverClient(IAzureClientFactory<ServiceBusSender> factory, IOptions<OrderItemsPublisherConfiguration> options)
     {
-        _httpClient = httpClient;
-        _httpClient.AddAzureFunctionConfiguration(options.Value.BaseUri, options.Value.ApiCode);
+        _sender = factory.CreateClient(options.Value.QueueName);
     }
 
     public async Task SendAsync(OrderRequest orderRequest)
     {
-        await _httpClient.PostJsonAsync("api/OrderItemsReceiver", orderRequest);
+        var message = new ServiceBusMessage(orderRequest.ToJson());
+        await _sender.SendMessageAsync(message);
     }
 }
 

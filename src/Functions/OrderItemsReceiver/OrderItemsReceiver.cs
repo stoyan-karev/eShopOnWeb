@@ -1,37 +1,38 @@
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.eShopWeb.Functions.OrderItemsReceiver.Models;
 using Microsoft.eShopWeb.Functions.Infrastructure;
 using System.Text.Json;
 using Azure.Storage.Blobs;
-using Microsoft.AspNetCore.Http;
+using Azure.Messaging.ServiceBus;
+using Microsoft.Azure.WebJobs.ServiceBus;
 
 namespace Microsoft.eShopWeb.Functions.OrderItemsReceiver;
 
 public static class OrderItemsReceiver
 {
     [FunctionName("OrderItemsReceiver")]
-    public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest request,
-        [Blob("orders", FileAccess.Write, Connection = "AzureWebJobsStorage")] BlobContainerClient ordersContainer)
+    public static async Task Run(
+        [ServiceBusTrigger("order-items", Connection = "OrderItemsQueueConnection", AutoCompleteMessages = false)] ServiceBusReceivedMessage message,
+        ServiceBusMessageActions messageActions,
+        [Blob("orders", FileAccess.Write, Connection = "OrderItemsStorage")] BlobContainerClient ordersContainer)
     {
-        var orderRequest = await request.ReadAsJsonAsync<OrderRequest>();
+        var orderRequest = message.ReadAsJson<OrderRequest>();
         if (orderRequest == null)
         {
-            return new BadRequestObjectResult("Invalid order request");
+            await messageActions.DeadLetterMessageAsync(message);
+            return;
         }
 
         ordersContainer.CreateIfNotExists();
-        var blob = ordersContainer.GetBlobClient(orderRequest.OrderId.ToString());
+        var blob = ordersContainer.GetBlobClient(orderRequest!.OrderId.ToString());
         using (var writer = new StreamWriter(await blob.OpenWriteAsync(true)))
         {
             var json = JsonSerializer.Serialize(orderRequest);
             await writer.WriteAsync(json);
         }
 
-        return new NoContentResult();
+        await messageActions.CompleteMessageAsync(message);
     }
 }

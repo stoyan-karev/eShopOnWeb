@@ -7,6 +7,8 @@ using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Text;
+using Azure.Messaging.ServiceBus;
+using Microsoft.Azure.WebJobs.ServiceBus;
 
 
 namespace Microsoft.eShopWeb.UnitTests.Functions;
@@ -25,16 +27,16 @@ public class OrderItemsReceiverTests
                 ]
         };
 
-        var request = Substitute.For<HttpRequest>();
-        request.Body.Returns(new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(orderRequest))));
+        var message = ServiceBusModelFactory.ServiceBusReceivedMessage(BinaryData.FromObjectAsJson(orderRequest));
+        var messageActions = Substitute.For<ServiceBusMessageActions>();
         var blobContainerClient = Substitute.For<BlobContainerClient>();
         var blobClient = Substitute.For<BlobClient>();
         blobClient.OpenWriteAsync(Arg.Any<bool>()).Returns(new MemoryStream());
         blobContainerClient.GetBlobClient(Arg.Any<string>()).Returns(blobClient);
 
-        var result = await OrderItemsReceiver.Run(request, blobContainerClient);
+        await OrderItemsReceiver.Run(message, messageActions, blobContainerClient);
 
-        Assert.IsType<NoContentResult>(result);
+        await messageActions.Received().CompleteMessageAsync(message);
     }
 
     [Fact]
@@ -46,13 +48,13 @@ public class OrderItemsReceiverTests
             OrderItems = null as List<OrderItem>
         };
 
-        var request = Substitute.For<HttpRequest>();
-        request.Body.Returns(new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(orderRequest))));
+        var message = ServiceBusModelFactory.ServiceBusReceivedMessage(BinaryData.FromObjectAsJson(orderRequest));
+        var messageActions = Substitute.For<ServiceBusMessageActions>();
         var blobContainerClient = Substitute.For<BlobContainerClient>();
 
-        var result = await OrderItemsReceiver.Run(request, blobContainerClient);
+        await OrderItemsReceiver.Run(message, messageActions, blobContainerClient);
 
-        Assert.IsType<BadRequestObjectResult>(result);
+        await messageActions.Received().DeadLetterMessageAsync(message);
     }
 }
 
