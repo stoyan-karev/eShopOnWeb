@@ -24,6 +24,8 @@ param sqlAdminPassword string
 
 param principalId string
 
+param failedOrdersMailingList string
+
 var abbrs = loadJsonContent('./abbreviations.json')
 var tags = { 'azd-env-name': environmentName }
 
@@ -108,6 +110,17 @@ module functionApp 'core/host/functions.bicep' = {
     storageAccountConnection: storage.outputs.connectionString
     deliveryOrdersDbConnectionString: deliveryOrdersDb.outputs.connectionString
     orderItemsQueueConnection: orderItemsQueue.outputs.listenConnectionString
+    tags: tags
+  }
+}
+
+module failedOrderEmailNotifier 'core/monitoring/failed-order-email-notifier.bicep' = {
+  name: 'failedOrderEmailNotifier'
+  scope: rg
+  params: {
+    location: location
+    name: 'sk-${abbrs.logicWorkflows}failed-order-email-notifier-${environmentName}'
+    mailingList: failedOrdersMailingList
     tags: tags
   }
 }

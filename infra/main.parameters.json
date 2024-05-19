@@ -22,6 +22,9 @@
     },
     "principalId": {
       "value": "${AZURE_PRINCIPAL_ID}"
+    },
+    "failedOrdersMailingList": {
+      "value": "${AZURE_FAILED_ORDERS_MAILING_LIST}"
     }
   }
 }
